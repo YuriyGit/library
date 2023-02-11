@@ -24,7 +24,7 @@ app.use(express.json())
 app.post('/api/user/login', (req, res) => {
     res
         .status(201)
-        .send({id: 1, mail: "test@mail.ru"})
+        .json({id: 1, mail: "test@mail.ru"})
 })
 
 app.post('/api/books', (req, res) => {
@@ -33,12 +33,12 @@ app.post('/api/books', (req, res) => {
     books.push(book)
     res
         .status(201)
-        .send(book)
+        .json(book)
 })
 
 app.get('/api/books', (req, res) => {
     const {books} = store
-    res.send(books)
+    res.json(books)
 })
 
 app.get('/api/books/:id', (req, res) => {
@@ -46,11 +46,11 @@ app.get('/api/books/:id', (req, res) => {
     const {books} = store
     const bookID = books.findIndex(book => book.id === id)
     if (bookID !== -1) {
-        res.send(books[bookID])
+        res.json(books[bookID])
     } else {
         res
             .status(404)
-            .send('Книга не найдена')
+            .json({errorCode: 404, errorMsg: 'not found'})
     }
 })
 
@@ -68,27 +68,25 @@ app.put('/api/books/:id', (req, res) => {
             fileCover,
             fileName,
         }
-        res.send(books[bookID])
+        res.json(books[bookID])
     } else {
         res
             .status(404)
-            .send('Книга не найдена')
+            .json({errorCode: 404, errorMsg: 'not found'})
     }
-
-
 })
 
 app.delete('/api/books/:id', (req, res) => {
     const {books} = store
     const {id} = req.params
     const bookID = books.findIndex(book => book.id === id)
-    if (bookID !== id) {
+    if (bookID !== -1) {
         books.splice(bookID, 1)
-        res.send('Ok')
+        res.json('Ok')
     } else {
         res
             .status(404)
-            .send('книга не найдена')
+            .json({errorCode: 404, errorMsg: 'not found'})
     }
 })
 
