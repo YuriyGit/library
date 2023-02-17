@@ -61,17 +61,19 @@ router.put('/api/books/:id',
     fileMulter.single('book'),
     (req, res) => {
         const {books} = store
-        const {title, authors, favorite, fileCover, fileName} = req.body
+        const {title, description, authors, favorite, fileCover, fileName, fileBook} = req.body
         const {id} = req.params
         const bookID = books.findIndex(book => book.id === id)
         if (bookID !== -1) {
             books[bookID] = {
                 ...books[bookID],
                 title,
+                description,
                 authors,
                 favorite,
                 fileCover,
                 fileName,
+                fileBook,
             }
             res.json(books[bookID])
         } else {
@@ -101,7 +103,7 @@ router.get('/api/books/:id/download', (req, res) => {
     const bookID = books.findIndex(book => book.id === id)
     if (bookID !== -1) {
         const {fileName} = books[bookID]
-        res.sendFile(path.join(__dirname, 'books', fileName))
+        res.download(path.join(__dirname, 'books', fileName), fileName)
     } else {
         res
             .status(404)
@@ -110,5 +112,3 @@ router.get('/api/books/:id/download', (req, res) => {
 })
 
 module.exports = router
-
-console.log(path.join(__dirname, 'books',))
