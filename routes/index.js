@@ -36,8 +36,8 @@ router.post('/api/create',
         const book = new Book(title, description, authors)
         const {books} = store
         books.push(book)
-        console.log(book)         //!!!!del
-        console.log (req.body)    //!!!!del
+        console.log(book)                        //!!!!del
+        console.log ('req.body: ', req.body)    //!!!!del
         res
             .status(201)
             .redirect('/api/books')
