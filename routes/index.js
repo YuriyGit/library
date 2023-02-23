@@ -21,27 +21,42 @@ class Book {
 
 const store = {
     books: []
-}
+};
+
 router.post('/api/user/login', (req, res) => {
     res
         .status(201)
         .json({id: 1, mail: "test@mail.ru"})
 })
 
-router.post('/api/books',
+router.post('/api/create',
     fileMulter.single('book'),
     (req, res) => {
-        const book = new Book()
+        const {title, description, authors} = req.body;
+        const book = new Book(title, description, authors)
         const {books} = store
         books.push(book)
+        console.log(book)         //!!!!del
+        console.log (req.body)    //!!!!del
         res
             .status(201)
-            .json(book)
+            .redirect('/api/books')
     })
+
+router.get('/api/create', (req, res) => {
+    res.render("books/create", {
+        title: "Новая книга",
+        description: "Описание книги",
+        author: "Автор книги",
+    });
+});
 
 router.get('/api/books', (req, res) => {
     const {books} = store
-    res.json(books)
+    res.render('books/index', {
+        title: "Главная страница",
+        books: books,
+    })
 })
 
 router.get('/api/books/:id', (req, res) => {
@@ -49,7 +64,10 @@ router.get('/api/books/:id', (req, res) => {
     const {books} = store
     const bookID = books.findIndex(book => book.id === id)
     if (bookID !== -1) {
-        res.json(books[bookID])
+        res.render('books/view', {
+            title: books[bookID].title,
+            description: books[bookID].description,
+        })
     } else {
         res
             .status(404)
