@@ -5,7 +5,7 @@ const fileMulter = require('../middlewear/file')
 const path = require('path')
 
 class Book {
-    constructor(id = uuid(), title = 'string', description = 'string', authors = 'string', favorite = true, fileCover = 'string', fileName = 'string', fileBook = "string") {
+    constructor(title = 'string', description = 'string', authors = 'string', favorite = true, fileCover = 'string', fileName = 'string', fileBook = "string", id = uuid()) {
         {
             this.id = id
             this.title = title
@@ -21,7 +21,7 @@ class Book {
 
 const store = {
     books: []
-};
+}
 
 router.post('/api/user/login', (req, res) => {
     res
@@ -32,12 +32,10 @@ router.post('/api/user/login', (req, res) => {
 router.post('/api/create',
     fileMulter.single('book'),
     (req, res) => {
-        const {title, description, authors} = req.body;
+        const {title, description, authors} = req.body
         const book = new Book(title, description, authors)
         const {books} = store
         books.push(book)
-        console.log(book)         //!!!!del
-        console.log (req.body)    //!!!!del
         res
             .status(201)
             .redirect('/api/books')
@@ -63,56 +61,69 @@ router.get('/api/books/:id', (req, res) => {
     const {id} = req.params
     const {books} = store
     const bookID = books.findIndex(book => book.id === id)
-    if (bookID !== -1) {
-        res.render('books/view', {
-            title: books[bookID].title,
-            description: books[bookID].description,
-        })
-    } else {
-        res
-            .status(404)
-            .json({errorCode: 404, errorMsg: 'not found'})
+
+    if (bookID === -1) {
+        res.redirect('/404')
     }
+
+    res.render('books/view', {
+        title: books[bookID].title,
+        description: books[bookID].description,
+    })
 })
 
-router.put('/api/books/:id',
+router.get('/api/update/:id', (req, res) => {
+    const {books} = store
+    const {id} = req.params
+    const bookID = books.findIndex(book => book.id === id)
+
+    if (bookID === -1) {
+        res.redirect('/404')
+    }
+
+    res.render('books/update', {
+        title: "Новая книга",
+        description: "Описание книги",
+        author: "Автор книги",
+    })
+})
+
+router.post('/api/update/:id',
     fileMulter.single('book'),
     (req, res) => {
         const {books} = store
-        const {title, description, authors, favorite, fileCover, fileName, fileBook} = req.body
         const {id} = req.params
+        const {title, description, authors, favorite, fileCover, fileName, fileBook} = req.body
         const bookID = books.findIndex(book => book.id === id)
-        if (bookID !== -1) {
-            books[bookID] = {
-                ...books[bookID],
-                title,
-                description,
-                authors,
-                favorite,
-                fileCover,
-                fileName,
-                fileBook,
-            }
-            res.json(books[bookID])
-        } else {
-            res
-                .status(404)
-                .json({errorCode: 404, errorMsg: 'not found'})
+
+        if (bookID === -1) {
+            res.redirect('/404')
         }
+
+        books[bookID] = {
+            ...books[bookID],
+            title,
+            description,
+            authors,
+            favorite,
+            fileCover,
+            fileName,
+            fileBook,
+        }
+        res.redirect(`/api/books/${id}`)
+
     })
 
 router.delete('/api/books/:id', (req, res) => {
     const {books} = store
     const {id} = req.params
     const bookID = books.findIndex(book => book.id === id)
-    if (bookID !== -1) {
-        books.splice(bookID, 1)
-        res.json('Ok')
-    } else {
-        res
-            .status(404)
-            .json({errorCode: 404, errorMsg: 'not found'})
+    if (bookID === -1) {
+        res.redirect('/404')
     }
+    books.splice(bookID, 1)
+    res.redirect('/api/books')
+
 })
 
 router.get('/api/books/:id/download', (req, res) => {
