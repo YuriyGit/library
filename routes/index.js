@@ -36,6 +36,7 @@ router.post('/api/create',
         const book = new Book(title, description, authors)
         const {books} = store
         books.push(book)
+
         res
             .status(201)
             .redirect('/api/books')
