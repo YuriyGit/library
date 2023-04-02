@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 
 const indexRouter = require('./routes/index')
-const errorMiddleware = require('./middlewear/error');
+const errorMiddleware = require('./middleware/error');
 
 app.use(express.urlencoded());
 app.set("view engine", "ejs");

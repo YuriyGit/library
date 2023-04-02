@@ -1,11 +1,36 @@
 const express = require('express')
 const {v4: uuid} = require("uuid");
 const router = express.Router()
-const fileMulter = require('../middlewear/file')
+const fileMulter = require('../middleware/file')
 const path = require('path')
+const http = require('http')
+
+function incr(bookID) {
+    fetch(`http://counter:3001/counter/${bookID}/incr`,
+        {method: 'post'})
+}
+
+function dataBase(bookID) {
+    const url = `http://counter:3001/counter/${bookID}`
+
+    http.get(url, (res) => {
+        let data = ''
+
+        res
+            .on('data', (chunk) => data += chunk)
+            .on('end', () => {
+                let parseData = JSON.parse(data);
+                const {books} = store;
+                const bookIndex = books.findIndex(book => book.id === bookID)
+                books[bookIndex].views = parseData.cnt
+            })
+    }).on('error', (err) => {
+        console.error(err)
+    })
+}
 
 class Book {
-    constructor(title = 'string', description = 'string', authors = 'string', favorite = true, fileCover = 'string', fileName = 'string', fileBook = "string", id = uuid()) {
+    constructor(title = 'string', description = 'string', authors = 'string', favorite = true, fileCover = 'string', fileName = 'string', fileBook = "string", views = 0, id = uuid()) {
         {
             this.id = id
             this.title = title
@@ -15,12 +40,35 @@ class Book {
             this.fileCover = fileCover
             this.fileName = fileName
             this.fileBook = fileBook
+            this.views = views
         }
     }
 }
 
 const store = {
-    books: []
+    books: [{
+        id: '1',
+        title: "test.1",
+        description: "test.1",
+        authors: "test.1",
+        favorite: "test.1",
+        fileCover: "test.1",
+        fileName: "test.1",
+        fileBook: "test.1",
+        views: 0
+    },
+        {
+            id: '2',
+            title: "test.2",
+            description: "test.2",
+            authors: "test.2",
+            favorite: "test.2",
+            fileCover: "test.2",
+            fileName: "test.2",
+            fileBook: "test.2",
+            views: 0
+        },
+    ]
 }
 
 router.post('/api/user/login', (req, res) => {
@@ -61,24 +109,28 @@ router.get('/api/books', (req, res) => {
 router.get('/api/books/:id', (req, res) => {
     const {id} = req.params
     const {books} = store
-    const bookID = books.findIndex(book => book.id === id)
+    const bookIndex = books.findIndex(book => book.id === id)
 
-    if (bookID === -1) {
+    if (bookIndex === -1) {
         res.redirect('/404')
     }
 
+    dataBase(books[bookIndex].id)
+
     res.render('books/view', {
-        title: books[bookID].title,
-        description: books[bookID].description,
+        title: books[bookIndex].title,
+        description: books[bookIndex].description,
+        view: books[bookIndex].views,
     })
+    incr(books[bookIndex].id)
 })
 
 router.get('/api/update/:id', (req, res) => {
     const {books} = store
     const {id} = req.params
-    const bookID = books.findIndex(book => book.id === id)
+    const bookIndex = books.findIndex(book => book.id === id)
 
-    if (bookID === -1) {
+    if (bookIndex === -1) {
         res.redirect('/404')
     }
 
@@ -95,14 +147,14 @@ router.post('/api/update/:id',
         const {books} = store
         const {id} = req.params
         const {title, description, authors, favorite, fileCover, fileName, fileBook} = req.body
-        const bookID = books.findIndex(book => book.id === id)
+        const bookIndex = books.findIndex(book => book.id === id)
 
-        if (bookID === -1) {
+        if (bookIndex === -1) {
             res.redirect('/404')
         }
 
-        books[bookID] = {
-            ...books[bookID],
+        books[bookIndex] = {
+            ...books[bookIndex],
             title,
             description,
             authors,
@@ -118,11 +170,11 @@ router.post('/api/update/:id',
 router.delete('/api/books/:id', (req, res) => {
     const {books} = store
     const {id} = req.params
-    const bookID = books.findIndex(book => book.id === id)
-    if (bookID === -1) {
+    const bookIndex = books.findIndex(book => book.id === id)
+    if (bookIndex === -1) {
         res.redirect('/404')
     }
-    books.splice(bookID, 1)
+    books.splice(bookIndex, 1)
     res.redirect('/api/books')
 
 })
@@ -130,9 +182,9 @@ router.delete('/api/books/:id', (req, res) => {
 router.get('/api/books/:id/download', (req, res) => {
     const {id} = req.params
     const {books} = store
-    const bookID = books.findIndex(book => book.id === id)
-    if (bookID !== -1) {
-        const {fileName} = books[bookID]
+    const bookIndex = books.findIndex(book => book.id === id)
+    if (bookIndex !== -1) {
+        const {fileName} = books[bookIndex]
         res.download(path.join(__dirname, 'books', fileName), fileName)
     } else {
         res
