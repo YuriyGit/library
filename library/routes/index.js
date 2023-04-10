@@ -5,8 +5,8 @@ const fileMulter = require('../middleware/file')
 const path = require('path')
 const http = require('http')
 
-function incr(bookID) {
-    fetch(`http://counter:3001/counter/${bookID}/incr`,
+async function incr(bookID) {
+    await fetch(`http://counter:3001/counter/${bookID}/incr`,
         {method: 'post'})
 }
 
@@ -15,7 +15,6 @@ function dataBase(bookID) {
 
     http.get(url, (res) => {
         let data = ''
-
         res
             .on('data', (chunk) => data += chunk)
             .on('end', () => {
@@ -55,7 +54,6 @@ const store = {
         fileCover: "test.1",
         fileName: "test.1",
         fileBook: "test.1",
-        views: 0
     },
         {
             id: '2',
@@ -66,7 +64,6 @@ const store = {
             fileCover: "test.2",
             fileName: "test.2",
             fileBook: "test.2",
-            views: 0
         },
     ]
 }
@@ -95,8 +92,8 @@ router.get('/api/create', (req, res) => {
         title: "Новая книга",
         description: "Описание книги",
         author: "Автор книги",
-    });
-});
+    })
+})
 
 router.get('/api/books', (req, res) => {
     const {books} = store
@@ -106,7 +103,7 @@ router.get('/api/books', (req, res) => {
     })
 })
 
-router.get('/api/books/:id', (req, res) => {
+router.get('/api/books/:id', async (req, res) => {
     const {id} = req.params
     const {books} = store
     const bookIndex = books.findIndex(book => book.id === id)
@@ -114,15 +111,15 @@ router.get('/api/books/:id', (req, res) => {
     if (bookIndex === -1) {
         res.redirect('/404')
     }
-
-    dataBase(books[bookIndex].id)
+    await dataBase(books[bookIndex].id)
 
     res.render('books/view', {
         title: books[bookIndex].title,
         description: books[bookIndex].description,
         view: books[bookIndex].views,
     })
-    incr(books[bookIndex].id)
+    await incr(books[bookIndex].id)
+
 })
 
 router.get('/api/update/:id', (req, res) => {
