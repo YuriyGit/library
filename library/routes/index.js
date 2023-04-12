@@ -5,26 +5,31 @@ const fileMulter = require('../middleware/file')
 const path = require('path')
 const http = require('http')
 
-async function incr(bookID) {
-    await fetch(`http://counter:3001/counter/${bookID}/incr`,
+function incr(bookID) {
+    return fetch(`http://counter:3001/counter/${bookID}/incr`,
         {method: 'post'})
 }
 
 function dataBase(bookID) {
     const url = `http://counter:3001/counter/${bookID}`
 
-    http.get(url, (res) => {
-        let data = ''
-        res
-            .on('data', (chunk) => data += chunk)
-            .on('end', () => {
-                let parseData = JSON.parse(data);
-                const {books} = store;
-                const bookIndex = books.findIndex(book => book.id === bookID)
-                books[bookIndex].views = parseData.cnt
-            })
-    }).on('error', (err) => {
-        console.error(err)
+    return new Promise( ( resolve, reject ) => {
+        http.get( url, ( res ) => {
+            let data = ''
+            res
+                .on( 'data', ( chunk ) => data += chunk )
+                .on( 'end', () => {
+                    let parseData = JSON.parse( data );
+                    const { books } = store;
+                    const bookIndex = books.findIndex( book => book.id === bookID )
+                    books[ bookIndex ].views = parseData.cnt
+                    resolve()
+                } )
+
+        }).on('error', (err) => {
+            console.error(err)
+            reject()
+        })
     })
 }
 
@@ -54,6 +59,7 @@ const store = {
         fileCover: "test.1",
         fileName: "test.1",
         fileBook: "test.1",
+        views: 0,
     },
         {
             id: '2',
@@ -64,6 +70,7 @@ const store = {
             fileCover: "test.2",
             fileName: "test.2",
             fileBook: "test.2",
+            views: 0,
         },
     ]
 }
@@ -92,8 +99,8 @@ router.get('/api/create', (req, res) => {
         title: "Новая книга",
         description: "Описание книги",
         author: "Автор книги",
-    })
-})
+    });
+});
 
 router.get('/api/books', (req, res) => {
     const {books} = store
@@ -103,24 +110,26 @@ router.get('/api/books', (req, res) => {
     })
 })
 
-router.get('/api/books/:id', async (req, res) => {
-    const {id} = req.params
-    const {books} = store
-    const bookIndex = books.findIndex(book => book.id === id)
+router.get('/api/books/:id',   async (req, res) => {
+        const {id} = req.params
+        const {books} = store
+        const bookIndex = books.findIndex(book => book.id === id)
 
-    if (bookIndex === -1) {
-        res.redirect('/404')
-    }
-    await dataBase(books[bookIndex].id)
+        if (bookIndex === -1) {
+            res.redirect('/404')
+        }
 
-    res.render('books/view', {
-        title: books[bookIndex].title,
-        description: books[bookIndex].description,
-        view: books[bookIndex].views,
-    })
-    await incr(books[bookIndex].id)
+        await incr( books[ bookIndex ].id )
+        await dataBase(books[bookIndex].id)
 
-})
+        console.log("/api/books/:id, dataBase: books[bookIndex].views:", books[bookIndex].views, __filename) //del
+        res.render('books/view', {
+            title: books[bookIndex].title,
+            description: books[bookIndex].description,
+            view: books[bookIndex].views,
+        })
+
+} )
 
 router.get('/api/update/:id', (req, res) => {
     const {books} = store
