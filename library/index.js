@@ -12,7 +12,6 @@ app.set("view engine", "ejs")
 app.use(express.json())
 
 app.use('/api', indexRouter)
-app.use('/user', indexRouter)
 
 app.use(errorMiddleware)
 
